@@ -1,0 +1,6 @@
+# Personal dictionary: preferred spellings, one per line
+Sahaj
+Kubernetes
+PostgreSQL
+Bentley
+iTwin

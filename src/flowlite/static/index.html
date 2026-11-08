@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>Flowlite — Voice, without the cleanup</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f4ef;
+      --card: #fffefa;
+      --ink: #20231f;
+      --muted: #73776e;
+      --line: #e6e5dc;
+      --green: #2a694e;
+      --green-dark: #1d503a;
+      --lime: #c9ef83;
+      --red: #a9433e;
+      --shadow: 0 16px 48px rgb(34 42 32 / 7%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 87% 2%, rgb(201 239 131 / 22%), transparent 29rem),
+        var(--paper);
+      color: var(--ink);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+
+    .shell { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
+    .topbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgb(32 35 31 / 9%);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 19px; font-weight: 720; letter-spacing: -.7px; }
+    .brand-mark {
+      width: 31px; height: 31px; display: grid; place-items: center;
+      border-radius: 10px; background: var(--green); color: var(--lime);
+    }
+    .brand-mark svg { width: 20px; height: 20px; }
+    .top-note { color: var(--muted); font-size: 13px; }
+
+    .hero { padding: 48px 0 32px; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--green); font-size: 11px; font-weight: 750; letter-spacing: 1.4px; text-transform: uppercase;
+    }
+    .eyebrow::before { width: 7px; height: 7px; border-radius: 50%; background: var(--green); content: ""; }
+    h1 { max-width: 700px; margin: 12px 0 10px; font-size: clamp(36px, 5vw, 55px); line-height: 1.04; letter-spacing: -2.7px; }
+    h1 span { color: var(--green); }
+    .hero p { max-width: 630px; margin: 0; color: var(--muted); font-size: 16px; }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(265px, .8fr); gap: 20px; align-items: start; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: var(--card); box-shadow: var(--shadow); }
+    .studio { overflow: hidden; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 23px; border-bottom: 1px solid var(--line); }
+    .card-title { margin: 0; font-size: 16px; font-weight: 680; letter-spacing: -.25px; }
+    .card-subtitle { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; color: var(--muted); font-size: 12px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #aaa99f; }
+    .status[data-state="ready"] .status-dot { background: #67a77b; }
+    .status[data-state="working"] .status-dot { background: #dca247; animation: pulse 1.2s ease-in-out infinite; }
+    .status[data-state="error"] .status-dot { background: var(--red); }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgb(220 162 71 / 18%); } }
+
+    .studio-body { padding: 22px 23px 24px; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 11px; }
+    .button {
+      min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      padding: 0 17px; border: 1px solid transparent; border-radius: 10px;
+      font-weight: 650; transition: background .15s, transform .15s;
+    }
+    .button:not(:disabled):active { transform: translateY(1px); }
+    .button-primary { background: var(--green); color: white; }
+    .button-primary:not(:disabled):hover { background: var(--green-dark); }
+    .button-secondary { border-color: var(--line); background: transparent; color: var(--ink); }
+    .button-secondary:not(:disabled):hover { background: #f5f4ef; }
+    .button svg { width: 16px; height: 16px; }
+    .select-wrap { margin-left: auto; display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    select {
+      min-height: 39px; padding: 0 28px 0 11px; border: 1px solid var(--line);
+      border-radius: 9px; background: var(--card); color: var(--ink);
+    }
+    .mic-hint { margin: 12px 0 22px; color: var(--muted); font-size: 12px; }
+
+    .preview {
+      min-height: 76px; display: flex; align-items: center; gap: 12px;
+      margin-bottom: 14px; padding: 14px 16px; border: 1px dashed #d9dccf; border-radius: 12px;
+      background: #fafaf5;
+    }
+    .wave-icon { flex: 0 0 25px; width: 25px; height: 25px; color: var(--green); }
+    .preview-label { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
+    .preview-text { min-height: 23px; margin-top: 2px; font-size: 14px; }
+    .preview-text .tentative { color: #888b81; }
+    .placeholder { color: #a0a297; }
+
+    .results { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .result-box { min-height: 140px; padding: 15px 16px; border: 1px solid var(--line); border-radius: 12px; }
+    .result-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .result-label { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: 1px; text-transform: uppercase; }
+    .result-tag { color: var(--muted); font-size: 10px; }
+    .clean-box { border-color: #d7e6d7; background: #f8fbf4; }
+    .clean-box .result-label { color: var(--green); }
+    .result-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; }
+    .result-text.empty { color: #a0a297; font-size: 13px; }
+    .timing { display: flex; flex-wrap: wrap; gap: 8px 15px; margin-top: 13px; color: var(--muted); font-size: 11px; }
+    .timing strong { color: var(--ink); font-weight: 650; }
+    .notice { margin-top: 13px; color: var(--red); font-size: 12px; }
+    [hidden] { display: none !important; }
+
+    .side { display: grid; gap: 16px; }
+    .side-card { padding: 20px; }
+    .side-heading { margin: 0 0 14px; font-size: 14px; font-weight: 680; }
+    .pipeline { display: grid; gap: 0; }
+    .pipeline-step { position: relative; display: grid; grid-template-columns: 25px 1fr; gap: 10px; padding-bottom: 16px; }
+    .pipeline-step:not(:last-child)::after { position: absolute; top: 24px; bottom: 1px; left: 11px; width: 1px; background: var(--line); content: ""; }
+    .step-number {
+      z-index: 1; width: 23px; height: 23px; display: grid; place-items: center;
+      border: 1px solid var(--line); border-radius: 50%; background: var(--card);
+      color: var(--green); font-size: 10px; font-weight: 750;
+    }
+    .step-title { font-size: 12px; font-weight: 650; }
+    .step-copy { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .backend-list { display: grid; gap: 10px; }
+    .backend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .backend-label { color: var(--muted); font-size: 12px; }
+    .backend-value { max-width: 150px; overflow: hidden; color: var(--ink); font-size: 11px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+    .privacy-note { margin: 16px 0 0; padding-top: 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+
+    .text-cleaner { margin-top: 20px; padding: 21px 23px 22px; }
+    .text-cleaner-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+    .text-cleaner-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .text-cleaner-form { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+    textarea {
+      width: 100%; min-height: 76px; resize: vertical; padding: 12px 13px;
+      border: 1px solid var(--line); border-radius: 10px; background: #fff;
+      color: var(--ink); outline: none;
+    }
+    textarea:focus, select:focus { border-color: #7da688; box-shadow: 0 0 0 3px rgb(42 105 78 / 10%); }
+    .cleaner-output { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #f4f6ed; }
+    .cleaner-output .result-text { font-size: 14px; }
+
+    footer { display: flex; justify-content: space-between; gap: 12px; padding: 23px 0 32px; color: var(--muted); font-size: 11px; }
+    footer a { color: var(--green); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 30px, 600px); }
+      .hero { padding-top: 36px; }
+      .workspace { grid-template-columns: 1fr; }
+      .side { grid-template-columns: 1fr 1fr; }
+      .card-head, .studio-body { padding-right: 17px; padding-left: 17px; }
+      .text-cleaner { padding-right: 17px; padding-left: 17px; }
+    }
+    @media (max-width: 520px) {
+      .top-note { font-size: 11px; }
+      .hero p { font-size: 14px; }
+      .side { grid-template-columns: 1fr; }
+      .results { grid-template-columns: 1fr; }
+      .result-box { min-height: 110px; }
+      .select-wrap { width: 100%; margin: 0; }
+      .select-wrap select { flex: 1; }
+      .text-cleaner-head { display: block; }
+      .text-cleaner-head p { margin-top: 3px; }
+      .text-cleaner-form { grid-template-columns: 1fr; }
+      .text-cleaner-form .button { justify-self: start; }
+      footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="shell topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h3l2-7 4 13 2-8 2 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      flowlite
+    </div>
+    <div class="top-note">Local-first voice dictation demo</div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">Speak naturally. See the difference.</div>
+      <h1>Voice, without<br><span>the cleanup.</span></h1>
+      <p>Watch speech become text in real time. Flowlite detects pauses, transcribes your words, and tidies the result while keeping your meaning.</p>
+    </section>
+
+    <div class="workspace">
+      <section class="card studio" aria-labelledby="studio-title">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title" id="studio-title">Live dictation</h2>
+            <p class="card-subtitle">Speak, pause, and your utterance will be finalized.</p>
+          </div>
+          <div class="status" id="live-status" data-state="ready" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span><span id="status-label">Ready</span>
+          </div>
+        </div>
+        <div class="studio-body">
+          <div class="controls">
+            <button class="button button-primary" id="start-button" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="3" width="8" height="13" rx="4" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Start speaking
+            </button>
+            <button class="button button-secondary" id="stop-button" type="button" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              Finish
+            </button>
+            <label class="select-wrap" for="style-select">Cleanup style
+              <select id="style-select">
+                <option value="neutral">Neutral</option>
+                <option value="formal">Formal</option>
+                <option value="casual">Casual</option>
+              </select>
+            </label>
+          </div>
+          <p class="mic-hint">Your browser will ask for microphone access. A short pause ends each sentence.</p>
+
+          <div class="preview" aria-live="polite">
+            <svg class="wave-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 10v4m4-8v12m4-16v20m4-14v8m4-11v14m4-8v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <div>
+              <div class="preview-label">Live preview · tentative words may change</div>
+              <div class="preview-text placeholder" id="preview-text">Your words will appear here as you speak.</div>
+            </div>
+          </div>
+
+          <div class="results">
+            <article class="result-box">
+              <div class="result-top"><span class="result-label">Recognized</span><span class="result-tag">ASR</span></div>
+              <p class="result-text empty" id="raw-text">Final transcript appears here.</p>
+            </article>
+            <article class="result-box clean-box">
+              <div class="result-top"><span class="result-label">Cleaned up</span><span class="result-tag" id="cleaner-tag">Cleanup</span></div>
+              <p class="result-text empty" id="clean-text">Polished text appears here.</p>
+            </article>
+          </div>
+          <div class="timing" id="timing-row" hidden>
+            <span>ASR <strong id="asr-time">—</strong></span>
+            <span>Cleanup <strong id="cleanup-time">—</strong></span>
+            <span>After endpoint <strong id="endpoint-time">—</strong></span>
+          </div>
+          <p class="notice" id="fallback-note" hidden></p>
+          <p class="notice" id="live-error" hidden></p>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="card side-card">
+          <h2 class="side-heading">What happens</h2>
+          <div class="pipeline">
+            <div class="pipeline-step"><span class="step-number">1</span><div><div class="step-title">Listen</div><div class="step-copy">Microphone audio is sent to the local Flowlite server.</div></div></div>
+            <div class="pipeline-step"><span class="step-number">2</span><div><div class="step-title">Transcribe</div><div class="step-copy">Voice activity detection finds pauses; Whisper recognizes speech.</div></div></div>
+            <div class="pipeline-step"><span class="step-number">3</span><div><div class="step-title">Polish</div><div class="step-copy">The selected cleaner removes disfluencies and formats text.</div></div></div>
+          </div>
+        </section>
+
+        <section class="card side-card">
+          <h2 class="side-heading">Connected models</h2>
+          <div class="backend-list">
+            <div class="backend-row"><span class="backend-label">Speech recognition</span><span class="backend-value" id="asr-backend">Checking…</span></div>
+            <div class="backend-row"><span class="backend-label">Text cleanup</span><span class="backend-value" id="cleaner-backend">Checking…</span></div>
+            <div class="backend-row"><span class="backend-label">Server</span><span class="backend-value" id="server-state">Connecting…</span></div>
+          </div>
+          <p class="privacy-note">Audio is processed by the configured Flowlite server. With local Whisper and Ollama, it stays on this machine.</p>
+        </section>
+      </aside>
+    </div>
+
+    <section class="card text-cleaner" aria-labelledby="text-clean-title">
+      <div class="text-cleaner-head">
+        <h2 class="card-title" id="text-clean-title">Try text cleanup</h2>
+        <p>No microphone needed. Test a phrase directly.</p>
+      </div>
+      <form class="text-cleaner-form" id="clean-form">
+        <textarea id="clean-input" rows="2" placeholder="For example: um hey can you can you send me the the report" aria-label="Text to clean"></textarea>
+        <button class="button button-primary" id="clean-button" type="submit">Clean text</button>
+      </form>
+      <div class="cleaner-output" id="text-clean-output" hidden>
+        <p class="result-text" id="text-clean-result"></p>
+      </div>
+      <p class="notice" id="clean-error" hidden></p>
+    </section>
+  </main>
+
+  <footer class="shell">
+    <span>Flowlite · Streaming dictation, running on your own stack.</span>
+    <a href="/docs" target="_blank" rel="noreferrer">API documentation ↗</a>
+  </footer>
+
+  <script>
+    "use strict";
+    const $ = (id) => document.getElementById(id);
+    const startButton = $("start-button");
+    const stopButton = $("stop-button");
+    const status = $("live-status");
+    const statusLabel = $("status-label");
+    const styleSelect = $("style-select");
+    const previewText = $("preview-text");
+    let socket = null;
+    let audioContext = null;
+    let mediaStream = null;
+    let sourceNode = null;
+    let processorNode = null;
+    let muteNode = null;
+    let recording = false;
+    let stopping = false;
+    let flushTimer = null;
+
+    function setStatus(text, state) {
+      statusLabel.textContent = text;
+      status.dataset.state = state || "ready";
+    }
+
+    function showError(id, message) {
+      const el = $(id);
+      el.textContent = message;
+      el.hidden = !message;
+    }
+
+    function setResult(id, text) {
+      const el = $(id);
+      el.textContent = text || "";
+      el.classList.toggle("empty", !text);
+    }
+
+    async function checkHealth() {
+      try {
+        const response = await fetch("/healthz");
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        $("asr-backend").textContent = data.asr || "Ready";
+        $("cleaner-backend").textContent = data.cleaner || "Ready";
+        $("server-state").textContent = "Connected";
+      } catch (error) {
+        $("asr-backend").textContent = "Unavailable";
+        $("cleaner-backend").textContent = "Unavailable";
+        $("server-state").textContent = "Unavailable";
+        showError("live-error", "Could not reach Flowlite. Start it with `flowlite serve` and reload this page.");
+        setStatus("Server unavailable", "error");
+      }
+    }
+
+    function connectSocket() {
+      const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+      const query = new URLSearchParams({ style: styleSelect.value });
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(`${protocol}//${location.host}/ws?${query}`);
+        socket = ws;
+        ws.onmessage = (event) => {
+          let data;
+          try { data = JSON.parse(event.data); }
+          catch { showError("live-error", "The server returned an unreadable event."); return; }
+          handleEvent(data);
+        };
+        ws.onerror = () => reject(new Error("Could not connect to the Flowlite WebSocket."));
+        ws.onclose = () => {
+          if (socket === ws) socket = null;
+          if (flushTimer) clearTimeout(flushTimer);
+          flushTimer = null;
+          if (stopping) {
+            stopping = false;
+            setStatus("Finished", "ready");
+            startButton.disabled = false;
+            stopButton.disabled = true;
+          } else if (recording) {
+            stopCapture();
+            recording = false;
+            stopping = false;
+            setStatus("Connection closed", "error");
+            showError("live-error", "The connection closed. Please start a new dictation session.");
+            startButton.disabled = false;
+            stopButton.disabled = true;
+          }
+        };
+        ws.onopen = () => resolve(ws);
+      });
+    }
+
+    function handleEvent(data) {
+      if (data.type === "partial") {
+        const stable = data.stable || "";
+        const tentative = data.tentative || "";
+        previewText.classList.remove("placeholder");
+        previewText.replaceChildren();
+        previewText.append(document.createTextNode(stable));
+        if (tentative) {
+          if (stable) previewText.append(document.createTextNode(" "));
+          const span = document.createElement("span");
+          span.className = "tentative";
+          span.textContent = tentative;
+          previewText.append(span);
+        }
+        if (!stable && !tentative) previewText.textContent = "Listening…";
+        return;
+      }
+      if (data.type === "final") {
+        setResult("raw-text", data.text);
+        $("asr-time").textContent = `${Math.round(data.asr_ms || 0)} ms`;
+        $("timing-row").hidden = false;
+        previewText.textContent = "Utterance recognized. Keep speaking or finish.";
+        previewText.classList.add("placeholder");
+        return;
+      }
+      if (data.type === "clean") {
+        setResult("raw-text", data.raw || data.text);
+        setResult("clean-text", data.text);
+        $("cleaner-tag").textContent = data.fallback ? "Rules fallback" : "Cleanup";
+        $("cleanup-time").textContent = `${Math.round(data.cleanup_ms || 0)} ms`;
+        $("endpoint-time").textContent = `${Math.round(data.after_endpoint_ms || 0)} ms`;
+        $("timing-row").hidden = false;
+        showError("fallback-note", data.fallback
+          ? `Cleanup used the rules fallback (${data.fallback_reason || "LLM unavailable"}).`
+          : "");
+        return;
+      }
+      if (data.type === "flushed") {
+        if (flushTimer) clearTimeout(flushTimer);
+        flushTimer = null;
+        if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, "flush complete");
+      }
+    }
+
+    function resample(input, sourceRate, targetRate) {
+      if (sourceRate === targetRate) return input;
+      const outputLength = Math.floor(input.length * targetRate / sourceRate);
+      const output = new Float32Array(outputLength);
+      const ratio = sourceRate / targetRate;
+      for (let i = 0; i < outputLength; i++) {
+        const position = i * ratio;
+        const left = Math.floor(position);
+        const fraction = position - left;
+        const right = Math.min(left + 1, input.length - 1);
+        output[i] = input[left] * (1 - fraction) + input[right] * fraction;
+      }
+      return output;
+    }
+
+    function sendPcm(samples) {
+      if (!socket || socket.readyState !== WebSocket.OPEN || !recording) return;
+      const mono16k = resample(samples, audioContext.sampleRate, 16000);
+      const buffer = new ArrayBuffer(mono16k.length * 2);
+      const view = new DataView(buffer);
+      for (let i = 0; i < mono16k.length; i++) {
+        const sample = Math.max(-1, Math.min(1, mono16k[i]));
+        view.setInt16(i * 2, sample < 0 ? sample * 32768 : sample * 32767, true);
+      }
+      socket.send(buffer);
+    }
+
+    async function stopCapture() {
+      if (processorNode) {
+        processorNode.onaudioprocess = null;
+        processorNode.disconnect();
+        processorNode = null;
+      }
+      if (sourceNode) {
+        sourceNode.disconnect();
+        sourceNode = null;
+      }
+      if (muteNode) {
+        muteNode.disconnect();
+        muteNode = null;
+      }
+      if (mediaStream) {
+        for (const track of mediaStream.getTracks()) track.stop();
+        mediaStream = null;
+      }
+      if (audioContext) {
+        const context = audioContext;
+        audioContext = null;
+        if (context.state !== "closed") await context.close();
+      }
+    }
+
+    async function startRecording() {
+      startButton.disabled = true;
+      stopButton.disabled = true;
+      showError("live-error", "");
+      showError("fallback-note", "");
+      setStatus("Connecting…", "working");
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Microphone access is unavailable. Use localhost or a secure HTTPS origin in a supported browser.");
+        }
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+        await connectSocket();
+        audioContext = new AudioContext();
+        await audioContext.resume();
+        sourceNode = audioContext.createMediaStreamSource(mediaStream);
+        processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+        muteNode = audioContext.createGain();
+        muteNode.gain.value = 0;
+        processorNode.onaudioprocess = (event) => sendPcm(event.inputBuffer.getChannelData(0));
+        sourceNode.connect(processorNode);
+        processorNode.connect(muteNode);
+        muteNode.connect(audioContext.destination);
+        recording = true;
+        stopping = false;
+        setStatus("Listening", "working");
+        stopButton.disabled = false;
+      } catch (error) {
+        await stopCapture();
+        if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
+        socket = null;
+        recording = false;
+        stopping = false;
+        setStatus("Could not start", "error");
+        showError("live-error", error && error.message ? error.message : "Could not start microphone dictation.");
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      }
+    }
+
+    async function finishRecording() {
+      if (!recording) return;
+      recording = false;
+      stopping = true;
+      stopButton.disabled = true;
+      setStatus("Finalizing…", "working");
+      try {
+        await stopCapture();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send("flush");
+          flushTimer = setTimeout(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) socket.close();
+            showError("live-error", "Finalization took too long. The server connection was closed.");
+          }, 30000);
+        } else {
+          stopping = false;
+          setStatus("Finished", "ready");
+          startButton.disabled = false;
+        }
+      } catch (error) {
+        stopping = false;
+        setStatus("Could not finish", "error");
+        showError("live-error", error && error.message ? error.message : "Could not finish the recording.");
+        startButton.disabled = false;
+      }
+    }
+
+    startButton.addEventListener("click", startRecording);
+    stopButton.addEventListener("click", finishRecording);
+
+    $("clean-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = $("clean-input").value.trim();
+      if (!text) {
+        showError("clean-error", "Enter a phrase to clean first.");
+        $("clean-input").focus();
+        return;
+      }
+      const button = $("clean-button");
+      button.disabled = true;
+      button.textContent = "Cleaning…";
+      showError("clean-error", "");
+      $("text-clean-output").hidden = true;
+      try {
+        const response = await fetch("/clean", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, style: styleSelect.value })
+        });
+        if (!response.ok) throw new Error("Cleanup request failed (HTTP " + response.status + ").");
+        const result = await response.json();
+        $("text-clean-result").textContent = result.text || "";
+        $("text-clean-output").hidden = false;
+      } catch (error) {
+        showError("clean-error", error && error.message ? error.message : "Could not clean that text.");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Clean text";
+      }
+    });
+
+    checkHealth();
+  </script>
+</body>
+</html>

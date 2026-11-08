@@ -1,0 +1,28 @@
+# id, category, raw (verbatim-ASR-style text), reference (what the user meant), optional speak (script for recording)
+{"id": "f1", "category": "filler", "raw": "uh so I was thinking we should uh move the standup to ten thirty", "reference": "So I was thinking we should move the standup to ten thirty."}
+{"id": "f2", "category": "filler", "raw": "um can you review my pull request when you get a chance", "reference": "Can you review my pull request when you get a chance?"}
+{"id": "f3", "category": "filler", "raw": "I just wanted to uh follow up on the invoice from last week", "reference": "I just wanted to follow up on the invoice from last week."}
+{"id": "f4", "category": "filler", "raw": "so um the deployment finished and uh everything looks healthy", "reference": "So the deployment finished and everything looks healthy."}
+{"id": "f5", "category": "filler", "raw": "hmm let me think the best option is probably the second one", "reference": "Let me think. The best option is probably the second one."}
+{"id": "r1", "category": "repetition", "raw": "can you can you please please check the logs", "reference": "Can you please check the logs?"}
+{"id": "r2", "category": "repetition", "raw": "the the report is due is due on Friday", "reference": "The report is due on Friday."}
+{"id": "r3", "category": "repetition", "raw": "we need to to update the the documentation", "reference": "We need to update the documentation."}
+{"id": "r4", "category": "repetition", "raw": "I I think that that's a good idea", "reference": "I think that's a good idea."}
+{"id": "c1", "category": "correction", "raw": "let's meet at five actually six pm", "reference": "Let's meet at six pm."}
+{"id": "c2", "category": "correction", "raw": "the meeting is on Tuesday no wait Wednesday", "reference": "The meeting is on Wednesday."}
+{"id": "c3", "category": "correction", "raw": "send it to Marcus sorry to Maria", "reference": "Send it to Maria."}
+{"id": "c4", "category": "correction", "raw": "the budget is ten thousand I mean twelve thousand dollars", "reference": "The budget is twelve thousand dollars."}
+{"id": "c5", "category": "correction", "raw": "schedule the call for March fifth scratch that March sixth", "reference": "Schedule the call for March sixth."}
+{"id": "c6", "category": "correction", "raw": "it should take three actually four days", "reference": "It should take four days."}
+{"id": "c7", "category": "correction", "raw": "I'll arrive on the fourteenth no wait the fifteenth", "reference": "I'll arrive on the fifteenth."}
+{"id": "q1", "category": "question", "raw": "what is the capital of france", "reference": "What is the capital of France?"}
+{"id": "q2", "category": "question", "raw": "can you tell me how to reset my password", "reference": "Can you tell me how to reset my password?"}
+{"id": "q3", "category": "question", "raw": "do you know if the office is open on Monday", "reference": "Do you know if the office is open on Monday?"}
+{"id": "n1", "category": "names", "raw": "ask sa hodge to review the cooper netties config", "reference": "Ask Sahaj to review the Kubernetes config.", "speak": "ask Sahaj to review the Kubernetes config"}
+{"id": "n2", "category": "names", "raw": "the post gress queue el database is down", "reference": "The PostgreSQL database is down.", "speak": "the PostgreSQL database is down"}
+{"id": "n3", "category": "names", "raw": "I work on the I twin platform at bentley", "reference": "I work on the iTwin platform at Bentley.", "speak": "I work on the iTwin platform at Bentley"}
+{"id": "p1", "category": "punctuation", "raw": "okay so here are the three things first fix the login bug second update the docs and third deploy on Friday", "reference": "Okay, so here are the three things: first, fix the login bug; second, update the docs; and third, deploy on Friday."}
+{"id": "p2", "category": "punctuation", "raw": "thanks for the update I'll take a look this afternoon and get back to you", "reference": "Thanks for the update. I'll take a look this afternoon and get back to you."}
+{"id": "m1", "category": "mixed", "raw": "um hey can you actually wait can you tell the team the launch is slipping to Monday", "reference": "Hey, can you tell the team the launch is slipping to Monday?"}
+{"id": "m2", "category": "mixed", "raw": "uh I think we should should ship on Thursday no wait Friday after the the review", "reference": "I think we should ship on Friday after the review."}
+{"id": "m3", "category": "mixed", "raw": "so basically uh we we need to rewrite the the parser", "reference": "So basically we need to rewrite the parser."}
